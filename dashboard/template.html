@@ -339,9 +339,11 @@ function initCharts(lang) {
     }, plotlyConfig);
   }
 
-  // 2. KAU Candlestick + Volume (latest KAU type with most data)
+  // 2. KAU Candlestick + Volume (latest KAU type that has actual trading data)
   const ohlcvTypes = Object.keys(ohlcvByType).sort();
-  const mainOhlcv = ohlcvTypes.length > 0 ? ohlcvTypes[ohlcvTypes.length - 1] : null;
+  const mainOhlcv = ohlcvTypes.filter(tp =>
+    ohlcvByType[tp].some(d => d.open_price > 0)
+  ).pop() || null;
   if (mainOhlcv && ohlcvByType[mainOhlcv].length > 0) {
     const oData = ohlcvByType[mainOhlcv].filter(d => d.open_price > 0);
     if (oData.length > 0) {
@@ -474,7 +476,9 @@ function updateChartLabels(lang) {
     });
   }
 
-  const mainOhlcv = Object.keys(ohlcvByType).sort().pop();
+  const mainOhlcv = Object.keys(ohlcvByType).sort().filter(tp =>
+    ohlcvByType[tp].some(d => d.open_price > 0)
+  ).pop() || null;
   if (document.getElementById('kau-candlestick-chart').data) {
     Plotly.relayout('kau-candlestick-chart', {
       'title.text': `${mainOhlcv || 'KAU'} ${t.kauCandlestick}`,
