@@ -16,8 +16,8 @@ Query, export, and visualize KAU/KCU/KOC trading data from 2015 to present.
 
 | Table | Records | Period | Description |
 |-------|---------|--------|-------------|
-| `kets_daily_price` | 11,798 | 2015-01 ~ 2023-12 | Daily closing prices (KAU/KCU/KOC) |
-| `kets_kau_ohlcv` | 798 | 2021-01 ~ 2023-12 | OHLCV candlestick data |
+| `kets_daily_price` | 19,299 | 2015-01 ~ 2026-03 | Daily closing prices (KAU/KCU/KOC) |
+| `kets_kau_ohlcv` | 2,097 | 2021-01 ~ 2026-03 | OHLCV candlestick data |
 | `kets_monthly` | 108 | 2015-01 ~ 2023-09 | Monthly volume & amount by market |
 | `kets_auction` | 54 | 2019-01 ~ 2023-12 | Government auction results |
 
