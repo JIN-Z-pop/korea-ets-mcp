@@ -3,6 +3,12 @@
 MCP server for Korea's Emission Trading Scheme (K-ETS) carbon market data.
 Query, export, and visualize KAU/KCU/KOC trading data from 2015 to present.
 
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-brightgreen)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![MCP](https://img.shields.io/badge/MCP-compatible-blue)
+
+> **[Live Dashboard Demo](https://jin-z-pop.github.io/korea-ets-mcp/)** — Click to explore K-ETS data interactively. No installation required.
+
 ## Features
 
 | Tool | Description |
