@@ -35,7 +35,7 @@ def _validate_market(market: str) -> None:
 def _validate_output_path(path: str) -> Path:
     resolved = Path(path).resolve()
     allowed = (_BASE_DIR / "data").resolve()
-    if not str(resolved).startswith(str(allowed)):
+    if not resolved.is_relative_to(allowed):
         raise ValueError(f"Output path must be within {allowed}")
     return resolved
 

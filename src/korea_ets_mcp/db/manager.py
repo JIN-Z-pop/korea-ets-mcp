@@ -113,9 +113,10 @@ class DBManager:
     def query_auction(self, permit_type: str | None = None) -> list[dict]:
         with self._connect() as conn:
             if permit_type:
+                escaped = permit_type.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
                 rows = conn.execute(
-                    "SELECT * FROM kets_auction WHERE permit_type LIKE ? ORDER BY auction_date",
-                    (f"%{permit_type}%",),
+                    "SELECT * FROM kets_auction WHERE permit_type LIKE ? ESCAPE '\\' ORDER BY auction_date",
+                    (f"%{escaped}%",),
                 ).fetchall()
             else:
                 rows = conn.execute(

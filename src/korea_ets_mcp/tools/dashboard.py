@@ -9,6 +9,15 @@ from jinja2 import Environment, FileSystemLoader
 from ..db.manager import DBManager
 
 
+def _safe_json_for_html(data, **kwargs) -> str:
+    """Serialize to JSON safe for embedding in <script> tags.
+
+    Escapes '</script>' breakout and U+2028/U+2029 line separators.
+    """
+    s = json.dumps(data, ensure_ascii=False, **kwargs)
+    return s.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
 def _clean_records(records: list[dict], drop_keys: set[str] | None = None) -> list[dict]:
     """Remove unnecessary fields and replace None with 0."""
     drop = drop_keys or {"fetched_at"}
@@ -49,11 +58,11 @@ def generate_dashboard(db: DBManager, output_path: str) -> str:
     template = env.get_template("template.html")
 
     html = template.render(
-        daily_data_json=json.dumps(daily_data, ensure_ascii=False),
-        ohlcv_data_json=json.dumps(ohlcv_data, ensure_ascii=False),
-        monthly_data_json=json.dumps(monthly_data, ensure_ascii=False),
-        auction_data_json=json.dumps(auction_data, ensure_ascii=False),
-        summary_json=json.dumps(summary, ensure_ascii=False, default=str),
+        daily_data_json=_safe_json_for_html(daily_data),
+        ohlcv_data_json=_safe_json_for_html(ohlcv_data),
+        monthly_data_json=_safe_json_for_html(monthly_data),
+        auction_data_json=_safe_json_for_html(auction_data),
+        summary_json=_safe_json_for_html(summary, default=str),
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
