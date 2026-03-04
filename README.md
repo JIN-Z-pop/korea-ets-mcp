@@ -36,12 +36,16 @@ Query, export, and visualize KAU/KCU/KOC trading data from 2015 to present.
 
 ## Quick Start
 
+**Recommended** (auto-manages Python version):
 ```bash
 git clone https://github.com/JIN-Z-pop/korea-ets-mcp.git
 cd korea-ets-mcp
-pip install -e .
+uv run korea-ets-dashboard
+```
 
-# View dashboard (standalone, no MCP required)
+Or with pip (requires Python 3.11+):
+```bash
+pip install -e .
 korea-ets-dashboard
 ```
 
