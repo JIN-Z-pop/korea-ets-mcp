@@ -26,6 +26,35 @@ body { font-family: 'Segoe UI', sans-serif; background: #0f1923; color: #e0e0e0;
 .chart { background: #1a2332; border-radius: 10px; margin-bottom: 20px; padding: 15px; border: 1px solid #2d3748; min-height: 420px; }
 .footer { text-align: center; padding: 20px; color: #718096; font-size: 0.85em; border-top: 1px solid #2d3748; margin-top: 10px; }
 .phase-tag { display: inline-block; background: #2d3748; color: #63b3ed; padding: 2px 8px; border-radius: 4px; font-size: 0.7em; margin-left: 4px; }
+/* Price filter bar */
+.pf-bar { padding: 6px 10px 2px; }
+.pf-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 3px; }
+.pf-sep { width: 1px; height: 16px; background: #4a5568; margin: 0 3px; flex-shrink: 0; }
+.pf-btn {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px 7px; border-radius: 3px; font-size: 0.72em;
+  cursor: pointer; border: 1px solid #4a5568; background: transparent;
+  color: #718096; transition: all 0.12s; user-select: none; line-height: 1.5;
+}
+.pf-btn:hover { border-color: #a0aec0; color: #e0e0e0; }
+.pf-ctrl { font-weight: 600; background: #2d3748; }
+.pf-ctrl:hover { background: #4a5568; }
+.pf-grp { font-weight: 600; }
+.pf-grp .arrow { font-size: 0.7em; transition: transform 0.15s; display: inline-block; }
+.pf-grp.expanded .arrow { transform: rotate(90deg); }
+.pf-grp.g-on { color: #fff; border-color: var(--c); background: var(--c); }
+.pf-grp.g-partial { color: var(--c); border-color: var(--c); border-style: dashed; }
+.pf-sub { display: none; gap: 3px; align-items: center; flex-wrap: wrap; padding: 1px 0; }
+.pf-sub.open { display: flex; }
+.pf-sub .pf-sub-ctl { font-size: 0.62em; color: #718096; cursor: pointer; padding: 1px 4px; border-radius: 2px; }
+.pf-sub .pf-sub-ctl:hover { color: #e0e0e0; background: #2d3748; }
+.pf-type {
+  padding: 1px 5px; font-size: 0.65em; min-width: 18px; text-align: center;
+  border-radius: 2px; cursor: pointer; border: 1px solid #4a5568;
+  color: #718096; transition: all 0.12s; user-select: none;
+}
+.pf-type:hover { border-color: #a0aec0; color: #e0e0e0; }
+.pf-type.on { color: #fff; border-color: var(--c); background: var(--c); }
 </style>
 </head>
 <body>
@@ -44,7 +73,10 @@ body { font-family: 'Segoe UI', sans-serif; background: #0f1923; color: #e0e0e0;
 
 <div class="cards" id="summary-cards"></div>
 <div class="chart-container">
-  <div class="chart" id="kau-price-chart"></div>
+  <div class="chart">
+    <div class="pf-bar" id="price-filter-bar"></div>
+    <div id="kau-price-chart"></div>
+  </div>
   <div class="chart" id="kau-candlestick-chart"></div>
   <div class="chart" id="monthly-volume-chart"></div>
   <div class="chart" id="monthly-heatmap"></div>
@@ -64,7 +96,7 @@ body { font-family: 'Segoe UI', sans-serif; background: #0f1923; color: #e0e0e0;
 const i18n = {
   en: {
     title: 'K-ETS Carbon Market Dashboard',
-    subtitle: 'Korea Emission Trading Scheme | Generated: 2026-03-04 10:25:47',
+    subtitle: 'Korea Emission Trading Scheme | Generated: 2026-03-04 10:37:17',
     kauLatestPrice: 'KAU Latest Price',
     tradingDays: 'Trading Days',
     priceRange: 'KAU Price Range',
@@ -97,10 +129,12 @@ const i18n = {
     otcVol: 'OTC Vol',
     auctionVol: 'Auction Vol',
     exchangeAmt: 'Exchange Amt',
+    filterAll: 'All', filterNone: 'None', filterReset: 'Reset',
+    filterGrpAll: 'all', filterGrpNone: 'none',
   },
   ko: {
     title: 'K-ETS 탄소시장 대시보드',
-    subtitle: '한국 배출권거래제 | 생성일시: 2026-03-04 10:25:47',
+    subtitle: '한국 배출권거래제 | 생성일시: 2026-03-04 10:37:17',
     kauLatestPrice: 'KAU 최신 종가',
     tradingDays: '거래일수',
     priceRange: 'KAU 가격 범위',
@@ -133,10 +167,12 @@ const i18n = {
     otcVol: '장외 거래량',
     auctionVol: '경매 물량',
     exchangeAmt: '장내 거래대금',
+    filterAll: '전체', filterNone: '해제', filterReset: '초기화',
+    filterGrpAll: '전체', filterGrpNone: '해제',
   },
   ja: {
     title: 'K-ETS 炭素市場ダッシュボード',
-    subtitle: '韓国排出権取引制度 | 生成日時: 2026-03-04 10:25:47',
+    subtitle: '韓国排出権取引制度 | 生成日時: 2026-03-04 10:37:17',
     kauLatestPrice: 'KAU 最新終値',
     tradingDays: '取引日数',
     priceRange: 'KAU 価格レンジ',
@@ -169,10 +205,12 @@ const i18n = {
     otcVol: '相対取引量',
     auctionVol: 'オークション量',
     exchangeAmt: '取引所取引額',
+    filterAll: '全選択', filterNone: '全解除', filterReset: 'クリア',
+    filterGrpAll: '全', filterGrpNone: '解除',
   },
   cn: {
     title: 'K-ETS 碳市场仪表盘',
-    subtitle: '韩国排放权交易制度 | 生成时间: 2026-03-04 10:25:47',
+    subtitle: '韩国排放权交易制度 | 生成时间: 2026-03-04 10:37:17',
     kauLatestPrice: 'KAU 最新收盘价',
     tradingDays: '交易日数',
     priceRange: 'KAU 价格范围',
@@ -205,6 +243,8 @@ const i18n = {
     otcVol: '场外交易量',
     auctionVol: '拍卖量',
     exchangeAmt: '场内交易额',
+    filterAll: '全选', filterNone: '全取消', filterReset: '重置',
+    filterGrpAll: '全选', filterGrpNone: '取消',
   },
 };
 
@@ -313,13 +353,9 @@ function getColor(type) {
 function initCharts(lang) {
   const t = i18n[lang];
 
-  // 1. KAU/KCU/KOC Closing Price Trend (multi-line)
+  // 1. KAU/KCU/KOC Closing Price Trend (multi-line) with filter bar
   const mainTypes = Object.keys(dailyByType).sort();
-  // Show only major types (KAU with most data, KCU, KOC)
-  const showTypes = mainTypes.filter(tp => {
-    const d = dailyByType[tp];
-    return d && d.length > 30;
-  });
+  const showTypes = mainTypes.filter(tp => dailyByType[tp] && dailyByType[tp].length > 30);
   if (showTypes.length > 0) {
     const traces = showTypes.map(tp => ({
       x: dailyByType[tp].map(d => d.date),
@@ -335,8 +371,9 @@ function initCharts(lang) {
       xaxis: { ...darkLayout.xaxis, rangeslider: { visible: true, bgcolor: '#1a2332' } },
       yaxis: { ...darkLayout.yaxis, title: { text: t.priceUnit, standoff: 10 } },
       height: 500,
-      legend: { bgcolor: 'rgba(26,35,50,0.8)', font: { size: 11 } },
+      showlegend: false,
     }, plotlyConfig);
+    buildPriceFilter(showTypes, t);
   }
 
   // 2. KAU Candlestick + Volume (latest KAU type that has actual trading data)
@@ -466,6 +503,177 @@ function initCharts(lang) {
   chartsInitialized = true;
 }
 
+// === Price Filter Bar ===
+const pfState = {}; // { 'KAU15': true, ... }
+const pfTraceMap = {}; // { 'KAU15': 0, ... }
+const pfGroups = {}; // { 'KAU': [{type,index},...], ... }
+const GROUP_COLORS = { KAU: '#63b3ed', KCU: '#9f7aea', KOC: '#f6e05e', 'i-KCU': '#b794f4', 'i-KOC': '#fbd38d' };
+const GROUP_ORDER = ['KAU', 'KCU', 'KOC', 'i-KCU', 'i-KOC'];
+
+function classifyGroup(tp) {
+  if (tp.startsWith('i-KOC')) return 'i-KOC';
+  if (tp.startsWith('i-KCU')) return 'i-KCU';
+  if (tp.startsWith('KAU')) return 'KAU';
+  if (tp.startsWith('KCU')) return 'KCU';
+  if (tp.startsWith('KOC')) return 'KOC';
+  return 'Other';
+}
+
+function getSuffix(tp, grp) {
+  const prefix = grp === 'i-KOC' ? 'i-KOC' : grp === 'i-KCU' ? 'i-KCU' : grp;
+  const s = tp.substring(prefix.length);
+  return s || tp;
+}
+
+function applyPfVisibility() {
+  const el = document.getElementById('kau-price-chart');
+  if (!el || !el.data) return;
+  const vis = el.data.map((_, i) => {
+    const tp = Object.keys(pfTraceMap).find(k => pfTraceMap[k] === i);
+    return tp && pfState[tp] ? true : 'legendonly';
+  });
+  Plotly.restyle('kau-price-chart', { visible: vis });
+}
+
+function updateGrpState() {
+  GROUP_ORDER.forEach(grp => {
+    const items = pfGroups[grp];
+    if (!items) return;
+    const btn = document.getElementById('pf-grp-' + grp);
+    if (!btn) return;
+    const onCount = items.filter(it => pfState[it.type]).length;
+    btn.classList.remove('g-on', 'g-partial');
+    if (onCount === items.length) btn.classList.add('g-on');
+    else if (onCount > 0) btn.classList.add('g-partial');
+  });
+}
+
+function updateTypeChips() {
+  Object.keys(pfState).forEach(tp => {
+    const chip = document.getElementById('pf-t-' + tp);
+    if (chip) chip.classList.toggle('on', !!pfState[tp]);
+  });
+}
+
+function pfSetAll(on) {
+  Object.keys(pfState).forEach(tp => { pfState[tp] = on; });
+  applyPfVisibility(); updateGrpState(); updateTypeChips();
+}
+
+function pfSetGroup(grp, on) {
+  (pfGroups[grp] || []).forEach(it => { pfState[it.type] = on; });
+  applyPfVisibility(); updateGrpState(); updateTypeChips();
+}
+
+function pfToggleType(tp) {
+  pfState[tp] = !pfState[tp];
+  applyPfVisibility(); updateGrpState(); updateTypeChips();
+}
+
+function pfReset(types) {
+  types.forEach(tp => { pfState[tp] = true; });
+  applyPfVisibility(); updateGrpState(); updateTypeChips();
+  // collapse all expanded groups
+  document.querySelectorAll('.pf-sub.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.pf-grp.expanded').forEach(el => el.classList.remove('expanded'));
+}
+
+function buildPriceFilter(types, t) {
+  // Init state
+  types.forEach((tp, i) => {
+    pfState[tp] = true;
+    pfTraceMap[tp] = i;
+    const grp = classifyGroup(tp);
+    if (!pfGroups[grp]) pfGroups[grp] = [];
+    pfGroups[grp].push({ type: tp, index: i });
+  });
+
+  const bar = document.getElementById('price-filter-bar');
+  bar.innerHTML = '';
+
+  // Row 1: Controls + Group chips
+  const row1 = document.createElement('div');
+  row1.className = 'pf-row';
+
+  // Control buttons
+  const mkCtrl = (label, fn) => {
+    const b = document.createElement('span');
+    b.className = 'pf-btn pf-ctrl';
+    b.textContent = label;
+    b.onclick = fn;
+    return b;
+  };
+  row1.appendChild(mkCtrl(t.filterAll, () => pfSetAll(true)));
+  row1.appendChild(mkCtrl(t.filterNone, () => pfSetAll(false)));
+  row1.appendChild(mkCtrl(t.filterReset, () => pfReset(types)));
+
+  // Separator
+  const sep = document.createElement('span');
+  sep.className = 'pf-sep';
+  row1.appendChild(sep);
+
+  // Group chips
+  GROUP_ORDER.forEach(grp => {
+    if (!pfGroups[grp]) return;
+    const cnt = pfGroups[grp].length;
+    const b = document.createElement('span');
+    b.className = 'pf-btn pf-grp g-on';
+    b.id = 'pf-grp-' + grp;
+    b.style.setProperty('--c', GROUP_COLORS[grp] || '#4a5568');
+    b.innerHTML = `${grp}<span style="opacity:0.6;font-size:0.85em;margin:0 2px">${cnt}</span><span class="arrow">&#9656;</span>`;
+    b.onclick = () => {
+      const subDiv = document.getElementById('pf-sub-' + grp);
+      if (subDiv) {
+        subDiv.classList.toggle('open');
+        b.classList.toggle('expanded');
+      }
+    };
+    row1.appendChild(b);
+  });
+
+  bar.appendChild(row1);
+
+  // Row 2+: Expandable sub-rows per group
+  GROUP_ORDER.forEach(grp => {
+    const items = pfGroups[grp];
+    if (!items) return;
+    const subDiv = document.createElement('div');
+    subDiv.className = 'pf-sub';
+    subDiv.id = 'pf-sub-' + grp;
+
+    // Group all/none controls
+    const allCtl = document.createElement('span');
+    allCtl.className = 'pf-sub-ctl';
+    allCtl.textContent = t.filterGrpAll;
+    allCtl.onclick = () => pfSetGroup(grp, true);
+    subDiv.appendChild(allCtl);
+
+    const noneCtl = document.createElement('span');
+    noneCtl.className = 'pf-sub-ctl';
+    noneCtl.textContent = t.filterGrpNone;
+    noneCtl.onclick = () => pfSetGroup(grp, false);
+    subDiv.appendChild(noneCtl);
+
+    const subSep = document.createElement('span');
+    subSep.className = 'pf-sep';
+    subDiv.appendChild(subSep);
+
+    // Individual type chips (suffix only)
+    items.forEach(it => {
+      const chip = document.createElement('span');
+      chip.className = 'pf-type on';
+      chip.id = 'pf-t-' + it.type;
+      chip.style.setProperty('--c', GROUP_COLORS[grp] || '#4a5568');
+      chip.textContent = getSuffix(it.type, grp);
+      chip.title = it.type;
+      chip.onclick = () => pfToggleType(it.type);
+      subDiv.appendChild(chip);
+    });
+
+    bar.appendChild(subDiv);
+  });
+}
+
 function updateChartLabels(lang) {
   const t = i18n[lang];
 
@@ -475,6 +683,17 @@ function updateChartLabels(lang) {
       'yaxis.title.text': t.priceUnit,
     });
   }
+
+  // Update filter bar labels for new language
+  const ctrls = document.querySelectorAll('#price-filter-bar .pf-ctrl');
+  if (ctrls.length >= 3) {
+    ctrls[0].textContent = t.filterAll;
+    ctrls[1].textContent = t.filterNone;
+    ctrls[2].textContent = t.filterReset;
+  }
+  document.querySelectorAll('#price-filter-bar .pf-sub-ctl').forEach((el, i) => {
+    el.textContent = i % 2 === 0 ? t.filterGrpAll : t.filterGrpNone;
+  });
 
   const mainOhlcv = Object.keys(ohlcvByType).sort().filter(tp =>
     ohlcvByType[tp].some(d => d.open_price > 0)
