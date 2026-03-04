@@ -1,0 +1,27 @@
+[project]
+name = "korea-ets-mcp"
+version = "1.0.0"
+description = "MCP server for Korea ETS (K-ETS) carbon market data — KAU/KCU/KOC dashboard, query, and export tools"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{name = "JIN-Z-pop and his merry AI brothers"}]
+dependencies = [
+    "mcp[cli]>=1.0",
+    "openpyxl>=3.1",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+korea-ets-mcp-lite = "korea_ets_mcp.server_lite:main"
+korea-ets-dashboard = "korea_ets_mcp.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+addopts = "-p no:flask"

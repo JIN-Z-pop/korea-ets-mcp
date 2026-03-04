@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korea ETS Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC" crossorigin="anonymous"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #0f1923; color: #e0e0e0; }
+.header { text-align: center; padding: 24px 20px; background: linear-gradient(135deg, #1a2332, #2d3748); position: relative; }
+.header h1 { font-size: 1.8em; color: #63b3ed; margin-bottom: 6px; }
+.header p { color: #a0aec0; font-size: 0.9em; }
+.lang-switcher { position: absolute; top: 20px; right: 24px; }
+.lang-switcher select {
+  background: #2d3748; color: #e0e0e0; border: 1px solid #4a5568; border-radius: 6px;
+  padding: 6px 12px; font-size: 0.85em; cursor: pointer; outline: none;
+}
+.lang-switcher select:hover { border-color: #63b3ed; }
+.cards { display: flex; gap: 15px; padding: 20px; flex-wrap: wrap; justify-content: center; }
+.card { background: #1a2332; border-radius: 10px; padding: 20px 24px; min-width: 200px; text-align: center; border: 1px solid #2d3748; flex: 1; max-width: 280px; }
+.card .value { font-size: 1.8em; color: #48bb78; font-weight: bold; line-height: 1.3; }
+.card .label { color: #a0aec0; font-size: 0.85em; margin-top: 6px; }
+.card .sub { color: #718096; font-size: 0.75em; margin-top: 4px; }
+.chart-container { padding: 10px 20px; max-width: 1400px; margin: 0 auto; }
+.chart { background: #1a2332; border-radius: 10px; margin-bottom: 20px; padding: 15px; border: 1px solid #2d3748; min-height: 420px; }
+.footer { text-align: center; padding: 20px; color: #718096; font-size: 0.85em; border-top: 1px solid #2d3748; margin-top: 10px; }
+.phase-tag { display: inline-block; background: #2d3748; color: #63b3ed; padding: 2px 8px; border-radius: 4px; font-size: 0.7em; margin-left: 4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1 id="main-title">K-ETS Carbon Market Dashboard</h1>
+  <p id="sub-title"></p>
+  <div class="lang-switcher">
+    <select id="lang-select" onchange="switchLang(this.value)">
+      <option value="en">English</option>
+      <option value="ko" selected>한국어</option>
+      <option value="ja">日本語</option>
+      <option value="cn">中文</option>
+    </select>
+  </div>
+</div>
+
+<div class="cards" id="summary-cards"></div>
+<div class="chart-container">
+  <div class="chart" id="kau-price-chart"></div>
+  <div class="chart" id="kau-candlestick-chart"></div>
+  <div class="chart" id="monthly-volume-chart"></div>
+  <div class="chart" id="monthly-heatmap"></div>
+  <div class="chart" id="auction-chart"></div>
+</div>
+<div class="footer" id="footer-text">
+  <div style="margin-bottom:12px;">
+    <strong id="ds-title"></strong><br>
+    <span id="ds-krx"></span><br>
+    <span id="ds-env"></span><br>
+    <span id="ds-disclaimer" style="color:#e53e3e;font-size:0.8em;"></span>
+  </div>
+  korea-ets-mcp | JIN-Z-pop and his merry AI brothers | Plotly.js
+</div>
+
+<script>
+const i18n = {
+  en: {
+    title: 'K-ETS Carbon Market Dashboard',
+    subtitle: 'Korea Emission Trading Scheme | Generated: {{ generated_at }}',
+    kauLatestPrice: 'KAU Latest Price',
+    tradingDays: 'Trading Days',
+    priceRange: 'KAU Price Range',
+    auctionCount: 'Auctions Held',
+    tradingDaysUnit: 'days',
+    avg: 'Avg',
+    times: 'times',
+    kauPriceTrend: 'KAU/KCU/KOC Closing Price Trend',
+    kauCandlestick: 'KAU Candlestick + Volume',
+    monthlyVolume: 'Monthly KAU Trading Volume & Amount',
+    monthlyHeatmap: 'Monthly Trading Volume Heatmap',
+    auctionResults: 'Auction Results (Award Price & Volume)',
+    priceUnit: 'Price (KRW/ton)',
+    closingPrice: 'Closing Price (KRW)',
+    volumeUnit: 'Volume (tons)',
+    volumeWan: 'Volume (10k tons)',
+    amountUnit: 'Amount (100M KRW)',
+    awardPrice: 'Award Price (KRW)',
+    awardQty: 'Award Qty (tons)',
+    months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    noOhlc: 'No OHLCV data available',
+    dataSource: 'Data Sources',
+    krxSource: 'KRX (Korea Exchange) Emissions Trading Market',
+    envSource: 'Ministry of Environment / GIR (Greenhouse Gas Inventory & Research Center)',
+    disclaimer: 'This dashboard is for research purposes only. Data accuracy is not guaranteed.',
+    phase1: 'Phase 1 (2015-2017)',
+    phase2: 'Phase 2 (2018-2020)',
+    phase3: 'Phase 3 (2021-2025)',
+    exchangeVol: 'Exchange Vol',
+    otcVol: 'OTC Vol',
+    auctionVol: 'Auction Vol',
+    exchangeAmt: 'Exchange Amt',
+  },
+  ko: {
+    title: 'K-ETS 탄소시장 대시보드',
+    subtitle: '한국 배출권거래제 | 생성일시: {{ generated_at }}',
+    kauLatestPrice: 'KAU 최신 종가',
+    tradingDays: '거래일수',
+    priceRange: 'KAU 가격 범위',
+    auctionCount: '경매 실시 횟수',
+    tradingDaysUnit: '일',
+    avg: '평균',
+    times: '회',
+    kauPriceTrend: 'KAU/KCU/KOC 종가 추이',
+    kauCandlestick: 'KAU 캔들차트 + 거래량',
+    monthlyVolume: '월별 KAU 거래량 & 거래대금',
+    monthlyHeatmap: '월별 거래량 히트맵',
+    auctionResults: '경매 결과 (낙찰가 & 낙찰량)',
+    priceUnit: '가격 (원/톤)',
+    closingPrice: '종가 (원)',
+    volumeUnit: '거래량 (톤)',
+    volumeWan: '거래량 (만톤)',
+    amountUnit: '거래대금 (억원)',
+    awardPrice: '낙찰가 (원)',
+    awardQty: '낙찰량 (톤)',
+    months: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+    noOhlc: 'OHLCV 데이터가 없습니다',
+    dataSource: '데이터 출처',
+    krxSource: 'KRX (한국거래소) 배출권시장',
+    envSource: '환경부 / 온실가스종합정보센터 (GIR)',
+    disclaimer: '본 대시보드는 연구 목적입니다. 데이터 정확성을 보증하지 않습니다.',
+    phase1: '1기 (2015-2017)',
+    phase2: '2기 (2018-2020)',
+    phase3: '3기 (2021-2025)',
+    exchangeVol: '장내 거래량',
+    otcVol: '장외 거래량',
+    auctionVol: '경매 물량',
+    exchangeAmt: '장내 거래대금',
+  },
+  ja: {
+    title: 'K-ETS 炭素市場ダッシュボード',
+    subtitle: '韓国排出権取引制度 | 生成日時: {{ generated_at }}',
+    kauLatestPrice: 'KAU 最新終値',
+    tradingDays: '取引日数',
+    priceRange: 'KAU 価格レンジ',
+    auctionCount: 'オークション回数',
+    tradingDaysUnit: '日',
+    avg: '平均',
+    times: '回',
+    kauPriceTrend: 'KAU/KCU/KOC 終値推移',
+    kauCandlestick: 'KAU ローソク足 + 出来高',
+    monthlyVolume: '月別KAU取引量・取引額',
+    monthlyHeatmap: '月別取引量ヒートマップ',
+    auctionResults: 'オークション結果（落札価格・落札量）',
+    priceUnit: '価格 (ウォン/トン)',
+    closingPrice: '終値 (ウォン)',
+    volumeUnit: '出来高 (トン)',
+    volumeWan: '出来高 (万トン)',
+    amountUnit: '取引額 (億ウォン)',
+    awardPrice: '落札価格 (ウォン)',
+    awardQty: '落札量 (トン)',
+    months: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    noOhlc: 'OHLCVデータがありません',
+    dataSource: 'データ出典',
+    krxSource: 'KRX（韓国取引所）排出権市場',
+    envSource: '環境部 / 温室効果ガス総合情報センター（GIR）',
+    disclaimer: '本ダッシュボードは研究目的です。データの正確性を保証するものではありません。',
+    phase1: '第1期 (2015-2017)',
+    phase2: '第2期 (2018-2020)',
+    phase3: '第3期 (2021-2025)',
+    exchangeVol: '取引所取引量',
+    otcVol: '相対取引量',
+    auctionVol: 'オークション量',
+    exchangeAmt: '取引所取引額',
+  },
+  cn: {
+    title: 'K-ETS 碳市场仪表盘',
+    subtitle: '韩国排放权交易制度 | 生成时间: {{ generated_at }}',
+    kauLatestPrice: 'KAU 最新收盘价',
+    tradingDays: '交易日数',
+    priceRange: 'KAU 价格范围',
+    auctionCount: '拍卖次数',
+    tradingDaysUnit: '日',
+    avg: '均价',
+    times: '次',
+    kauPriceTrend: 'KAU/KCU/KOC 收盘价走势',
+    kauCandlestick: 'KAU K线图 + 成交量',
+    monthlyVolume: '月度KAU交易量与交易额',
+    monthlyHeatmap: '月度交易量热图',
+    auctionResults: '拍卖结果（中标价与中标量）',
+    priceUnit: '价格 (韩元/吨)',
+    closingPrice: '收盘价 (韩元)',
+    volumeUnit: '成交量 (吨)',
+    volumeWan: '成交量 (万吨)',
+    amountUnit: '交易额 (亿韩元)',
+    awardPrice: '中标价 (韩元)',
+    awardQty: '中标量 (吨)',
+    months: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    noOhlc: '暂无OHLCV数据',
+    dataSource: '数据来源',
+    krxSource: 'KRX（韩国交易所）排放权市场',
+    envSource: '环境部 / 温室气体综合信息中心（GIR）',
+    disclaimer: '本仪表盘仅供研究参考，数据准确性不做保证。',
+    phase1: '第1期 (2015-2017)',
+    phase2: '第2期 (2018-2020)',
+    phase3: '第3期 (2021-2025)',
+    exchangeVol: '场内交易量',
+    otcVol: '场外交易量',
+    auctionVol: '拍卖量',
+    exchangeAmt: '场内交易额',
+  },
+};
+
+let currentLang = 'ko';
+
+// === Data (Jinja2 injected) ===
+const rawDailyData = {{ daily_data_json }};
+const rawOhlcvData = {{ ohlcv_data_json }};
+const rawMonthlyData = {{ monthly_data_json }};
+const rawAuctionData = {{ auction_data_json }};
+const summary = {{ summary_json }};
+
+// Group daily data by permit type
+function groupBy(data, key) {
+  const groups = {};
+  data.forEach(d => {
+    const k = d[key];
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(d);
+  });
+  return groups;
+}
+
+const dailyByType = groupBy(rawDailyData, 'permit_type');
+const ohlcvByType = groupBy(rawOhlcvData, 'kau_type');
+
+const darkLayout = {
+  paper_bgcolor: '#1a2332', plot_bgcolor: '#1a2332',
+  font: { color: '#e0e0e0', family: 'Segoe UI, sans-serif' },
+  xaxis: { gridcolor: '#2d3748', linecolor: '#2d3748' },
+  yaxis: { gridcolor: '#2d3748', linecolor: '#2d3748' },
+  margin: { t: 60, b: 50, l: 70, r: 30 },
+};
+
+const plotlyConfig = {
+  responsive: true,
+  displaylogo: false,
+  modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+};
+
+function fmt(n, dec) {
+  if (n == null || n === 0) return 'N/A';
+  return dec != null ? n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : n.toLocaleString();
+}
+
+// === Render Cards ===
+function renderCards(lang) {
+  const t = i18n[lang];
+  const cardsDiv = document.getElementById('summary-cards');
+  cardsDiv.innerHTML = '';
+  const dp = summary.daily_price || {};
+  const lp = (summary.latest_prices || []);
+  const latestKAU = lp.find(p => p.permit_type && p.permit_type.startsWith('KAU'));
+
+  const cardDefs = [
+    {
+      value: latestKAU ? `₩${fmt(latestKAU.closing_price)}` : 'N/A',
+      label: t.kauLatestPrice,
+      sub: latestKAU ? `${latestKAU.permit_type} (${latestKAU.date})` : '',
+    },
+    {
+      value: dp.total_trading_days || 0,
+      label: t.tradingDays,
+      sub: dp.first_date && dp.last_date ? `${dp.first_date} ~ ${dp.last_date}` : '',
+    },
+    {
+      value: dp.min_price && dp.max_price ? `₩${fmt(dp.min_price)} - ₩${fmt(dp.max_price)}` : 'N/A',
+      label: t.priceRange,
+      sub: dp.avg_price ? `${t.avg}: ₩${fmt(dp.avg_price)}` : '',
+    },
+    {
+      value: (summary.auction || {}).auction_count || 0,
+      label: t.auctionCount,
+      sub: `${((summary.auction || {}).first_auction) || ''} ~ ${((summary.auction || {}).last_auction) || ''}`,
+    },
+  ];
+
+  cardDefs.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `<div class="value">${c.value}</div><div class="label">${c.label}</div>${c.sub ? '<div class="sub">' + c.sub + '</div>' : ''}`;
+    cardsDiv.appendChild(div);
+  });
+}
+
+// === Charts ===
+let chartsInitialized = false;
+
+// Color palette for permit types
+const typeColors = {
+  'KAU15': '#63b3ed', 'KAU16': '#63b3ed', 'KAU17': '#63b3ed',
+  'KAU18': '#48bb78', 'KAU19': '#48bb78', 'KAU20': '#48bb78',
+  'KAU21': '#ed8936', 'KAU22': '#ed8936', 'KAU23': '#ed8936',
+  'KAU24': '#fc8181', 'KAU25': '#fc8181',
+  'KCU': '#9f7aea', 'KCU23': '#9f7aea', 'KCU24': '#9f7aea',
+  'KOC': '#f6e05e',
+};
+function getColor(type) {
+  if (typeColors[type]) return typeColors[type];
+  if (type.startsWith('KCU')) return '#9f7aea';
+  if (type.startsWith('KOC')) return '#f6e05e';
+  if (type.startsWith('KAU')) return '#63b3ed';
+  return '#a0aec0';
+}
+
+function initCharts(lang) {
+  const t = i18n[lang];
+
+  // 1. KAU/KCU/KOC Closing Price Trend (multi-line)
+  const mainTypes = Object.keys(dailyByType).sort();
+  // Show only major types (KAU with most data, KCU, KOC)
+  const showTypes = mainTypes.filter(tp => {
+    const d = dailyByType[tp];
+    return d && d.length > 30;
+  });
+  if (showTypes.length > 0) {
+    const traces = showTypes.map(tp => ({
+      x: dailyByType[tp].map(d => d.date),
+      y: dailyByType[tp].map(d => d.closing_price),
+      type: 'scatter', mode: 'lines',
+      line: { color: getColor(tp), width: 1.5 },
+      name: tp,
+      hovertemplate: `${tp}<br>%{x}<br>₩%{y:,.0f}/ton<extra></extra>`,
+    }));
+    Plotly.newPlot('kau-price-chart', traces, {
+      ...darkLayout,
+      title: { text: t.kauPriceTrend, font: { color: '#63b3ed', size: 16 } },
+      xaxis: { ...darkLayout.xaxis, rangeslider: { visible: true, bgcolor: '#1a2332' } },
+      yaxis: { ...darkLayout.yaxis, title: { text: t.priceUnit, standoff: 10 } },
+      height: 500,
+      legend: { bgcolor: 'rgba(26,35,50,0.8)', font: { size: 11 } },
+    }, plotlyConfig);
+  }
+
+  // 2. KAU Candlestick + Volume (latest KAU type with most data)
+  const ohlcvTypes = Object.keys(ohlcvByType).sort();
+  const mainOhlcv = ohlcvTypes.length > 0 ? ohlcvTypes[ohlcvTypes.length - 1] : null;
+  if (mainOhlcv && ohlcvByType[mainOhlcv].length > 0) {
+    const oData = ohlcvByType[mainOhlcv].filter(d => d.open_price > 0);
+    if (oData.length > 0) {
+      const ohlcDates = oData.map(d => d.date);
+      Plotly.newPlot('kau-candlestick-chart', [{
+        x: ohlcDates,
+        open: oData.map(d => d.open_price),
+        high: oData.map(d => d.high_price),
+        low: oData.map(d => d.low_price),
+        close: oData.map(d => d.close_price),
+        type: 'candlestick', name: mainOhlcv,
+        increasing: { line: { color: '#fc8181' }, fillcolor: 'rgba(252,129,129,0.3)' },
+        decreasing: { line: { color: '#63b3ed' }, fillcolor: 'rgba(99,179,237,0.3)' },
+      }, {
+        x: ohlcDates,
+        y: oData.map(d => d.volume),
+        type: 'bar', name: 'Volume', yaxis: 'y2',
+        marker: { color: oData.map(d => d.close_price >= d.open_price ? 'rgba(252,129,129,0.4)' : 'rgba(99,179,237,0.4)') },
+        hovertemplate: '%{x}<br>Volume: %{y:,.0f}<extra></extra>',
+      }], {
+        ...darkLayout,
+        title: { text: `${mainOhlcv} ${t.kauCandlestick}`, font: { color: '#63b3ed', size: 16 } },
+        yaxis: { ...darkLayout.yaxis, title: t.priceUnit, domain: [0.3, 1] },
+        yaxis2: { title: t.volumeUnit, gridcolor: '#2d3748', linecolor: '#2d3748', domain: [0, 0.25], anchor: 'x', font: { color: '#e0e0e0' } },
+        xaxis: { ...darkLayout.xaxis, rangeslider: { visible: false } },
+        height: 500,
+        showlegend: false,
+      }, plotlyConfig);
+    } else {
+      document.getElementById('kau-candlestick-chart').innerHTML = `<p style="text-align:center;padding:40px;color:#718096;">${t.noOhlc}</p>`;
+    }
+  } else {
+    document.getElementById('kau-candlestick-chart').innerHTML = `<p style="text-align:center;padding:40px;color:#718096;">${t.noOhlc}</p>`;
+  }
+
+  // 3. Monthly KAU Volume & Amount (dual axis bar + line)
+  if (rawMonthlyData.length > 0) {
+    const mLabels = rawMonthlyData.map(d => `${d.year}-${String(d.month).padStart(2, '0')}`);
+    const exchVol = rawMonthlyData.map(d => d.kau_exchange_vol / 10000);
+    const exchAmt = rawMonthlyData.map(d => d.kau_exchange_amt / 100000000);
+
+    Plotly.newPlot('monthly-volume-chart', [{
+      x: mLabels, y: exchVol,
+      type: 'bar', name: t.exchangeVol,
+      marker: { color: 'rgba(99,179,237,0.6)' },
+      hovertemplate: '%{x}<br>%{y:,.0f}<extra></extra>',
+    }, {
+      x: mLabels, y: exchAmt,
+      type: 'scatter', mode: 'lines+markers',
+      name: t.exchangeAmt, yaxis: 'y2',
+      line: { color: '#48bb78', width: 2 },
+      marker: { size: 4 },
+      hovertemplate: '%{x}<br>%{y:,.0f}<extra></extra>',
+    }], {
+      ...darkLayout,
+      title: { text: t.monthlyVolume, font: { color: '#63b3ed', size: 16 } },
+      yaxis: { ...darkLayout.yaxis, title: t.volumeWan },
+      yaxis2: { title: t.amountUnit, overlaying: 'y', side: 'right', gridcolor: '#2d3748', font: { color: '#e0e0e0' } },
+      xaxis: { ...darkLayout.xaxis, type: 'category', tickangle: -45 },
+      height: 450,
+      legend: { bgcolor: 'rgba(26,35,50,0.8)', orientation: 'h', y: 1.12 },
+      bargap: 0.3,
+    }, plotlyConfig);
+  }
+
+  // 4. Monthly Heatmap
+  if (rawMonthlyData.length > 0) {
+    const heatYears = [...new Set(rawMonthlyData.map(d => String(d.year)))].sort();
+    const months = Array.from({length: 12}, (_, i) => i + 1);
+    const monthMap = {};
+    rawMonthlyData.forEach(d => { monthMap[`${d.year}-${d.month}`] = d.kau_exchange_vol; });
+    const zData = heatYears.map(y => months.map(m => {
+      const v = monthMap[`${y}-${m}`];
+      return v && v > 0 ? Math.round(v / 10000) : null;
+    }));
+    Plotly.newPlot('monthly-heatmap', [{
+      z: zData, x: t.months, y: heatYears,
+      type: 'heatmap', colorscale: 'YlOrRd', connectgaps: false,
+      colorbar: { title: { text: t.volumeWan, side: 'right' }, tickfont: { color: '#e0e0e0' } },
+      hovertemplate: '%{y} %{x}<br>%{z:,.0f}<extra></extra>',
+      zmin: 0,
+    }], {
+      ...darkLayout,
+      title: { text: t.monthlyHeatmap, font: { color: '#63b3ed', size: 16 } },
+      xaxis: { ...darkLayout.xaxis, type: 'category' },
+      yaxis: { ...darkLayout.yaxis, type: 'category', autorange: 'reversed' },
+      height: 380,
+    }, plotlyConfig);
+  }
+
+  // 5. Auction Results (scatter: award price + bar: award qty)
+  if (rawAuctionData.length > 0) {
+    const aLabels = rawAuctionData.map(d => `${d.auction_date} (${d.permit_type})`);
+    Plotly.newPlot('auction-chart', [{
+      x: aLabels,
+      y: rawAuctionData.map(d => d.avg_award_price),
+      type: 'scatter', mode: 'lines+markers',
+      name: t.awardPrice,
+      line: { color: '#ed8936', width: 2 },
+      marker: { size: 6 },
+      hovertemplate: '%{x}<br>₩%{y:,.0f}<extra></extra>',
+    }, {
+      x: aLabels,
+      y: rawAuctionData.map(d => d.award_qty),
+      type: 'bar', name: t.awardQty, yaxis: 'y2',
+      marker: { color: 'rgba(99,179,237,0.5)' },
+      hovertemplate: '%{x}<br>%{y:,.0f} tons<extra></extra>',
+    }], {
+      ...darkLayout,
+      title: { text: t.auctionResults, font: { color: '#63b3ed', size: 16 } },
+      yaxis: { ...darkLayout.yaxis, title: t.awardPrice },
+      yaxis2: { title: t.awardQty, overlaying: 'y', side: 'right', gridcolor: '#2d3748', font: { color: '#e0e0e0' } },
+      xaxis: { ...darkLayout.xaxis, type: 'category', tickangle: -60, tickfont: { size: 9 } },
+      height: 450,
+      legend: { bgcolor: 'rgba(26,35,50,0.8)', orientation: 'h', y: 1.12 },
+      bargap: 0.4,
+    }, plotlyConfig);
+  }
+
+  chartsInitialized = true;
+}
+
+function updateChartLabels(lang) {
+  const t = i18n[lang];
+
+  if (document.getElementById('kau-price-chart').data) {
+    Plotly.relayout('kau-price-chart', {
+      'title.text': t.kauPriceTrend,
+      'yaxis.title.text': t.priceUnit,
+    });
+  }
+
+  const mainOhlcv = Object.keys(ohlcvByType).sort().pop();
+  if (document.getElementById('kau-candlestick-chart').data) {
+    Plotly.relayout('kau-candlestick-chart', {
+      'title.text': `${mainOhlcv || 'KAU'} ${t.kauCandlestick}`,
+      'yaxis.title': t.priceUnit,
+      'yaxis2.title': t.volumeUnit,
+    });
+  }
+
+  if (document.getElementById('monthly-volume-chart').data) {
+    Plotly.relayout('monthly-volume-chart', {
+      'title.text': t.monthlyVolume,
+      'yaxis.title': t.volumeWan,
+      'yaxis2.title': t.amountUnit,
+    });
+    Plotly.restyle('monthly-volume-chart', { name: t.exchangeVol }, [0]);
+    Plotly.restyle('monthly-volume-chart', { name: t.exchangeAmt }, [1]);
+  }
+
+  if (document.getElementById('monthly-heatmap').data) {
+    Plotly.relayout('monthly-heatmap', { 'title.text': t.monthlyHeatmap });
+    Plotly.restyle('monthly-heatmap', { x: [t.months] }, [0]);
+  }
+
+  if (document.getElementById('auction-chart').data) {
+    Plotly.relayout('auction-chart', {
+      'title.text': t.auctionResults,
+      'yaxis.title': t.awardPrice,
+      'yaxis2.title': t.awardQty,
+    });
+  }
+}
+
+function renderCharts(lang) {
+  if (!chartsInitialized) {
+    initCharts(lang);
+  } else {
+    updateChartLabels(lang);
+  }
+}
+
+function switchLang(lang) {
+  currentLang = lang;
+  const t = i18n[lang];
+  document.getElementById('main-title').textContent = t.title;
+  document.getElementById('sub-title').textContent = t.subtitle;
+  document.getElementById('ds-title').textContent = t.dataSource;
+  document.getElementById('ds-krx').textContent = t.krxSource;
+  document.getElementById('ds-env').textContent = t.envSource;
+  document.getElementById('ds-disclaimer').textContent = t.disclaimer;
+  renderCards(lang);
+  renderCharts(lang);
+  try { localStorage.setItem('kets-dashboard-lang', lang); } catch(e) {}
+}
+
+let savedLang = 'ko';
+try { savedLang = localStorage.getItem('kets-dashboard-lang') || 'ko'; } catch(e) {}
+document.getElementById('lang-select').value = savedLang;
+switchLang(savedLang);
+</script>
+</body>
+</html>

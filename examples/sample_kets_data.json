@@ -1,0 +1,234 @@
+{
+  "description": "Sample K-ETS data from korea_ets.db",
+  "daily_price_sample": [
+    {
+      "date": "2023-12-01",
+      "permit_type": "KAU23",
+      "closing_price": 8500
+    },
+    {
+      "date": "2023-12-01",
+      "permit_type": "KAU24",
+      "closing_price": 8610
+    },
+    {
+      "date": "2023-12-01",
+      "permit_type": "KAU25",
+      "closing_price": 8610
+    },
+    {
+      "date": "2023-12-01",
+      "permit_type": "KCU23",
+      "closing_price": 7500
+    },
+    {
+      "date": "2023-12-01",
+      "permit_type": "KOC21-23",
+      "closing_price": 11850
+    },
+    {
+      "date": "2023-12-01",
+      "permit_type": "KOC22-24",
+      "closing_price": 12400
+    },
+    {
+      "date": "2023-12-01",
+      "permit_type": "KOC23-25",
+      "closing_price": 14500
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KAU23",
+      "closing_price": 8780
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KAU24",
+      "closing_price": 8610
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KAU25",
+      "closing_price": 8610
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KCU23",
+      "closing_price": 7500
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KOC21-23",
+      "closing_price": 11850
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KOC22-24",
+      "closing_price": 12400
+    },
+    {
+      "date": "2023-12-04",
+      "permit_type": "KOC23-25",
+      "closing_price": 14500
+    },
+    {
+      "date": "2023-12-05",
+      "permit_type": "KAU23",
+      "closing_price": 8780
+    },
+    {
+      "date": "2023-12-05",
+      "permit_type": "KAU24",
+      "closing_price": 8610
+    },
+    {
+      "date": "2023-12-05",
+      "permit_type": "KAU25",
+      "closing_price": 8610
+    },
+    {
+      "date": "2023-12-05",
+      "permit_type": "KCU23",
+      "closing_price": 7500
+    },
+    {
+      "date": "2023-12-05",
+      "permit_type": "KOC21-23",
+      "closing_price": 11850
+    },
+    {
+      "date": "2023-12-05",
+      "permit_type": "KOC22-24",
+      "closing_price": 12400
+    }
+  ],
+  "kau_ohlcv_sample": [
+    {
+      "date": "2023-12-01",
+      "kau_type": "KAU23",
+      "volume": 206002,
+      "open_price": 8300,
+      "high_price": 8600,
+      "low_price": 8300,
+      "close_price": 8500
+    },
+    {
+      "date": "2023-12-04",
+      "kau_type": "KAU23",
+      "volume": 58001,
+      "open_price": 8500,
+      "high_price": 8790,
+      "low_price": 8500,
+      "close_price": 8780
+    },
+    {
+      "date": "2023-12-05",
+      "kau_type": "KAU23",
+      "volume": 121901,
+      "open_price": 8610,
+      "high_price": 9040,
+      "low_price": 8610,
+      "close_price": 8780
+    },
+    {
+      "date": "2023-12-06",
+      "kau_type": "KAU23",
+      "volume": 90057,
+      "open_price": 8500,
+      "high_price": 9590,
+      "low_price": 8500,
+      "close_price": 9500
+    },
+    {
+      "date": "2023-12-07",
+      "kau_type": "KAU23",
+      "volume": 219509,
+      "open_price": 9200,
+      "high_price": 10450,
+      "low_price": 9200,
+      "close_price": 10450
+    },
+    {
+      "date": "2023-12-08",
+      "kau_type": "KAU23",
+      "volume": 647001,
+      "open_price": 10750,
+      "high_price": 11000,
+      "low_price": 10000,
+      "close_price": 10000
+    },
+    {
+      "date": "2023-12-11",
+      "kau_type": "KAU23",
+      "volume": 162115,
+      "open_price": 9800,
+      "high_price": 9990,
+      "low_price": 9000,
+      "close_price": 9000
+    },
+    {
+      "date": "2023-12-12",
+      "kau_type": "KAU23",
+      "volume": 965815,
+      "open_price": 8160,
+      "high_price": 9100,
+      "low_price": 8150,
+      "close_price": 9080
+    },
+    {
+      "date": "2023-12-13",
+      "kau_type": "KAU23",
+      "volume": 461704,
+      "open_price": 9300,
+      "high_price": 9570,
+      "low_price": 9300,
+      "close_price": 9540
+    },
+    {
+      "date": "2023-12-14",
+      "kau_type": "KAU23",
+      "volume": 139021,
+      "open_price": 9000,
+      "high_price": 9700,
+      "low_price": 9000,
+      "close_price": 9670
+    }
+  ],
+  "monthly_sample": [
+    {
+      "year": 2023,
+      "month": 1,
+      "kau_exchange_vol": 1008618,
+      "kau_exchange_amt": 14348820700,
+      "avg_price": 14226
+    },
+    {
+      "year": 2023,
+      "month": 2,
+      "kau_exchange_vol": 1462122,
+      "kau_exchange_amt": 19042866650,
+      "avg_price": 13024
+    },
+    {
+      "year": 2023,
+      "month": 3,
+      "kau_exchange_vol": 2383009,
+      "kau_exchange_amt": 32064220750,
+      "avg_price": 13455
+    },
+    {
+      "year": 2023,
+      "month": 4,
+      "kau_exchange_vol": 3801591,
+      "kau_exchange_amt": 49695252100,
+      "avg_price": 13072
+    },
+    {
+      "year": 2023,
+      "month": 5,
+      "kau_exchange_vol": 4648744,
+      "kau_exchange_amt": 55574256100,
+      "avg_price": 11955
+    }
+  ]
+}
