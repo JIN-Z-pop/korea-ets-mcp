@@ -93,6 +93,12 @@ The dashboard includes:
 - Auction results (award price & volume)
 - 4-language support: English, Korean, Japanese, Chinese
 
+## Disclaimer
+
+This tool is provided for research and educational purposes only. The authors make no warranties regarding accuracy, completeness, or fitness for any particular purpose, and accept no liability for any loss or damage arising from its use. Use of this tool is entirely at your own risk.
+
+본 도구는 연구·교육 목적으로 공개되었습니다. 정확성·완전성·특정 목적에 대한 적합성을 보증하지 않으며, 본 도구의 사용으로 인해 발생한 어떠한 손해에 대해서도 책임을 지지 않습니다. 이용은 전적으로 이용자 본인의 책임하에 이루어집니다.
+
 ## License
 
 MIT License - JIN-Z-pop and his merry AI brothers
