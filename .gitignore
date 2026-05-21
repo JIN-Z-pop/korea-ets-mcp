@@ -1,6 +1,5 @@
 data/*
 !data/korea_ets.db
-!data/dashboard.html
 .env
 __pycache__/
 *.pyc
