@@ -43,6 +43,16 @@ def parse_float(s: str) -> float:
     return float(s.replace(",", ""))
 
 
+def is_intraday(date_str: str) -> bool:
+    """KRX returns today's row during trading hours as a partial snapshot.
+
+    Skip it until after market close (15:30 KST; buffer to 16:00) so only
+    final EOD values enter the DB. Local clock is JST == KST (UTC+9).
+    """
+    now = datetime.now()
+    return date_str == now.strftime("%Y-%m-%d") and now.hour < 16
+
+
 def fetch_month(session: requests.Session, year: int, month: int) -> list[dict]:
     """Fetch one month of data from KRX ETS."""
     from calendar import monthrange
@@ -102,10 +112,18 @@ def insert_daily_price(conn: sqlite3.Connection, items: list[dict]) -> int:
         elif len(date) == 8:
             date = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
 
+        if is_intraday(date):
+            continue
+
         try:
+            # Upsert: heals rows frozen from a past intraday snapshot.
+            # WHERE clause keeps unchanged rows untouched (no fetched_at churn).
             conn.execute(
-                "INSERT OR IGNORE INTO kets_daily_price (date, permit_type, closing_price, fetched_at) "
-                "VALUES (?, ?, ?, ?)",
+                "INSERT INTO kets_daily_price (date, permit_type, closing_price, fetched_at) "
+                "VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(date, permit_type) DO UPDATE SET "
+                "closing_price=excluded.closing_price, fetched_at=excluded.fetched_at "
+                "WHERE kets_daily_price.closing_price != excluded.closing_price",
                 (date, permit_type, closing_price, now),
             )
             if conn.total_changes:
@@ -136,11 +154,23 @@ def insert_ohlcv(conn: sqlite3.Connection, items: list[dict]) -> int:
         if not date or close_p == 0:
             continue
 
+        if is_intraday(date):
+            continue
+
         try:
             conn.execute(
-                "INSERT OR IGNORE INTO kets_kau_ohlcv "
+                "INSERT INTO kets_kau_ohlcv "
                 "(date, kau_type, volume, open_price, high_price, low_price, close_price, fetched_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+                "ON CONFLICT(date, kau_type) DO UPDATE SET "
+                "volume=excluded.volume, open_price=excluded.open_price, "
+                "high_price=excluded.high_price, low_price=excluded.low_price, "
+                "close_price=excluded.close_price, fetched_at=excluded.fetched_at "
+                "WHERE kets_kau_ohlcv.volume != excluded.volume "
+                "OR kets_kau_ohlcv.close_price != excluded.close_price "
+                "OR kets_kau_ohlcv.open_price != excluded.open_price "
+                "OR kets_kau_ohlcv.high_price != excluded.high_price "
+                "OR kets_kau_ohlcv.low_price != excluded.low_price",
                 (date, kau_type, volume, open_p, high_p, low_p, close_p, now),
             )
             if conn.total_changes:
