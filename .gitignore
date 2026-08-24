@@ -11,3 +11,7 @@ build/
 # このリポジトリと無関係なPC(WSL)復旧用スクリプト。誤って本ディレクトリに保存されたもの (DD#3408判定 2026-08-16)
 wsl_debug.py
 wsl_fix.py
+# local AI-assistant work directories (not part of the published dataset)
+.claude-worktrees/
+# unrelated local file kept out of the repository
+Events on the Potential Applications of AI Technologies.pptx
