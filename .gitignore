@@ -1,6 +1,7 @@
 data/*
 !data/korea_ets.db
 .env
+.security-allowlist.json
 __pycache__/
 *.pyc
 *.egg-info/
